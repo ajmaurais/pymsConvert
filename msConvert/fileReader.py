@@ -5,6 +5,7 @@ from threading import Thread
 import pyopenms
 
 from fileTypes import FileType
+from MS2File import MS2File
 
 
 def _getFileHandeler(iftype: FileType):
@@ -12,6 +13,8 @@ def _getFileHandeler(iftype: FileType):
         return pyopenms.MzMLFile()
     elif iftype == FileType.MZXML:
         return pyopenms.MzXMLFile()
+    elif iftype == FileType.MS2:
+        return MS2File()
     else:
         raise NotImplementedError('{} not implemented!'.format(iftype.value))
 
@@ -38,13 +41,26 @@ def convertFile(ifname : str, iftype: FileType, oftype: FileType, ofname : str =
 
 def _convertFiles_threadHelper(q : Queue, iftype: FileType, oftype: FileType, ofname : str = None):
     while True:
-        item = q.get()
-        if item is None:
+        if q.empty():
             break
+        item = q.get()
         convertFile(item, iftype, oftype, ofname)
         q.task_done()
 
 
 def convertFiles(ifnames : list, nThread : int, iftype: FileType, oftype: FileType, **kwargs):
-    q = Queue(ifnames)
 
+    _ofname = None if 'ofname' not in kwargs else kwargs['ofname']
+
+    #init queue of file names
+    q = Queue()
+    for f in ifnames:
+        q.put(f)
+
+    #create thread pool
+    for i in range(nThread):
+        worker = Thread(target = _convertFiles_threadHelper,
+                        args = [q, iftype, oftype, _ofname])
+        worker.start()
+
+    q.join()

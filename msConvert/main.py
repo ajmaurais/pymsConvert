@@ -4,6 +4,7 @@ import sys
 from multiprocessing import cpu_count
 
 from fileTypes import FileType
+import fileReader
 
 def getArgs():
     fileTypeList = [val.value for val in FileType.__members__.values()]
@@ -33,12 +34,17 @@ def getArgs():
         sys.stderr.write('Error! Can not specify OFNAME if multiple inputs are given!\n')
         exit(-1)
 
+    args.nThread = args.nThread if len(args.input_file) > args.nThread else len(args.input_file)
+
     return args
 
 
 def main():
     args = getArgs()
 
+    fileReader.convertFiles(args.input_file, args.nThread,
+                            FileType(args.inType), FileType(args.outType))
+    #fileReader.convertFile(args.input_file[0], FileType(args.inType), FileType(args.outType))
 
 
 
