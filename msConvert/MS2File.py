@@ -96,7 +96,7 @@ class MS2File(pyopenms.MS2File):
 
                 #write ions
                 for ion in scan:
-                    outF.write('{0:.4f} {0:.1f}\n'.format(round(ion.getMZ(),4),
+                    outF.write('{0:.4f} {1:.1f}\n'.format(round(ion.getMZ(), 4),
                                                     round(ion.getIntensity(), 1)))
 
 
