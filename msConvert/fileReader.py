@@ -1,6 +1,6 @@
 
 from os.path import splitext
-from queue import Queue
+from multiprocessing import Process, Queue
 from threading import Thread
 import pyopenms
 
@@ -45,7 +45,7 @@ def _convertFiles_threadHelper(q : Queue, iftype: FileType, oftype: FileType, of
             break
         item = q.get()
         convertFile(item, iftype, oftype, ofname)
-        q.task_done()
+        #q.task_done()
 
 
 def convertFiles(ifnames : list, nThread : int, iftype: FileType, oftype: FileType, **kwargs):
@@ -58,9 +58,11 @@ def convertFiles(ifnames : list, nThread : int, iftype: FileType, oftype: FileTy
         q.put(f)
 
     #create thread pool
-    for i in range(nThread):
-        worker = Thread(target = _convertFiles_threadHelper,
-                        args = [q, iftype, oftype, _ofname])
-        worker.start()
+    threads = [Process(target = _convertFiles_threadHelper,
+                       args = [q, iftype, oftype, _ofname]) for x in range(nThread)]
 
-    q.join()
+    for t in threads:
+        t.start()
+
+    for t in threads:
+        t.join()
