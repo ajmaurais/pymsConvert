@@ -83,6 +83,8 @@ class MS2File(pyopenms.MS2File):
                 outF.write(self._writeValue(MS2File._i_tag, 'IonInjectionTime', 'Unknown'))
                 ameth = list(precursors[0].getActivationMethods())
                 ameth = ' '.join([MS2File._activationMethods[x] for x in ameth])
+                if not ameth:
+                    ameth = 'Unknown'
                 outF.write(self._writeValue(MS2File._i_tag, 'ActivationType', ameth))
                 outF.write(self._writeValue(MS2File._i_tag, 'PrecursorFile', precursorFile))
                 outF.write(self._writeValue(MS2File._i_tag, 'PrecursorScan', preScan))

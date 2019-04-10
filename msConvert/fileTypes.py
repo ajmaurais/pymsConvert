@@ -6,3 +6,4 @@ class FileType (Enum):
     MZML = 'mzML'
     MS2 = 'ms2'
     MS1 = 'ms1'
+    MGF = 'mgf'

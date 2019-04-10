@@ -1,11 +1,11 @@
 
 from os.path import splitext
 from multiprocessing import Process, Queue
-from threading import Thread
 import pyopenms
 
 from fileTypes import FileType
 from MS2File import MS2File
+from mascotGenericFile import MascotGenericFile
 
 
 def _getFileHandeler(iftype: FileType):
@@ -15,6 +15,8 @@ def _getFileHandeler(iftype: FileType):
         return pyopenms.MzXMLFile()
     elif iftype == FileType.MS2:
         return MS2File()
+    elif iftype == FileType.MGF:
+        return MascotGenericFile()
     else:
         raise NotImplementedError('{} not implemented!'.format(iftype.value))
 
