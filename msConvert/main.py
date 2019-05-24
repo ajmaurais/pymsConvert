@@ -18,8 +18,8 @@ def getArgs():
                         help='Output file type')
 
     parser.add_argument('--nThread', type=int, default=cpu_count(),
-                        help='Specify number of threads to use.'
-                             'By default, each file is processed in its own thread,'
+                        help='Specify number of threads to use. '
+                             'By default, each file is processed in its own thread, '
                              'up to the number of supported threads on the system.')
 
     parser.add_argument('--ofname',
