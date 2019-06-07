@@ -10,11 +10,6 @@ Custom implementations of file I\O functions not available in `pyopenms`, includ
 * mzML
 * ms2
 
-## Dependencies
-```
-pyopenms
-```
-
 ## Usage
 ```
 usage: main.py [-h] -i {mzXML,mzML,ms2,ms1,mgf} -o {mzXML,mzML,ms2,ms1,mgf}
