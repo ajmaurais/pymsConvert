@@ -28,32 +28,65 @@ def readToPeakMap(ifname, iftype):
     return peakMap
 
 
-def convertFile(ifname : str, iftype: FileType, oftype: FileType, ofname : str = None):
+def convertFile(ifname : str, iftype: FileType, oftype: FileType, nFractions : int = 1):
     #read input peak map
     peakMap = readToPeakMap(ifname, iftype)
 
-    #get ofname
-    if ofname is None:
-        _ofname = '{}.{}'.format(splitext(ifname)[0], oftype.value)
-    else: _ofname = ofname
-
     fileHandeler = _getFileHandeler(oftype)
-    fileHandeler.store(_ofname, peakMap)
+    if nFractions == 1:
+        ofname = '{}.{}'.format(splitext(ifname)[0], oftype.value)
+        fileHandeler.store(ofname, peakMap)
+    else:
+        # get ofnames
+        ofnames = list()
+        for i in range(nFractions):
+            ofnames.append('{}_{}.{}'.format(splitext(ifname)[0], i + 1, oftype.value))
+
+        # get spectra data from peakMap
+        peakMap.sortSpectra()
+        peakMap.updateRanges()
+        msLeveles = peakMap.getMSLevels()
+        maxLevel = min(msLeveles)
+        spectraList = peakMap.getSpectra()
+
+        nSpectra = len(spectraList)
+        beginScan = 0
+        endScan = 0
+        scansPerFile = nSpectra // nFractions
+        scansRemaining = nSpectra % nFractions
+
+        for i, f in enumerate(ofnames):
+            # fileHandeler.store(f, peakMap)
+            beginScan = endScan
+            endScan = beginScan + scansPerFile
+            if len(msLeveles) > 1:
+                for scan in range(endScan, nSpectra):
+                    if spectraList[endScan].getMSLevel() != maxLevel:
+                        endScan += 1
+                    else:
+                        break
+
+            if i == len(ofnames):
+                if nSpectra - endScan < scansPerFile:
+                    endScan = nSpectra
+            print('{} : {} -> {} scans total'.format(beginScan, endScan, endScan - beginScan))
+            tempPeakMap = pyopenms.MSExperiment()
+            tempPeakMap.setSpectra(spectraList[beginScan:endScan])
+            fileHandeler.store(f, tempPeakMap)
 
 
-def _convertFiles_threadHelper(q : Queue, iftype: FileType, oftype: FileType, ofname : str = None):
+def _convertFiles_threadHelper(q : Queue, iftype: FileType, oftype: FileType, **kwargs):
     while True:
         if q.empty():
             break
         item = q.get()
-        convertFile(item, iftype, oftype, ofname)
-        #q.task_done()
+        convertFile(item, iftype, oftype, **kwargs)
 
 
 def convertFiles(ifnames : list, nThread : int, iftype: FileType, oftype: FileType, **kwargs):
-
-    _ofname = None if 'ofname' not in kwargs else kwargs['ofname']
-
+    
+    # convertFile(ifnames[0], iftype, oftype, **kwargs)
+    
     #init queue of file names
     q = Queue()
     for f in ifnames:
@@ -61,10 +94,11 @@ def convertFiles(ifnames : list, nThread : int, iftype: FileType, oftype: FileTy
 
     #create thread pool
     threads = [Process(target = _convertFiles_threadHelper,
-                       args = [q, iftype, oftype, _ofname]) for x in range(nThread)]
+                       args = [q, iftype, oftype], kwargs = kwargs) for x in range(nThread)]
 
     for t in threads:
         t.start()
 
     for t in threads:
         t.join()
+
